@@ -43,6 +43,7 @@ from .oft import OFTConfig, OFTModel
 from .osf import OSFConfig, OSFModel
 from .p_tuning import PromptEncoder, PromptEncoderConfig, PromptEncoderReparameterizationType
 from .poly import PolyConfig, PolyModel
+from .quanta import QuantaConfig, QuantaLayer, QuantaLinear, QuantaModel
 from .prefix_tuning import PrefixEncoder, PrefixTuningConfig
 from .prompt_tuning import PromptEmbedding, PromptTuningConfig, PromptTuningInit
 from .randlora import RandLoraConfig, RandLoraModel
@@ -100,6 +101,10 @@ __all__ = [
     "OSFModel",
     "PolyConfig",
     "PolyModel",
+    "QuantaConfig",
+    "QuantaLayer",
+    "QuantaLinear",
+    "QuantaModel",
     "PrefixEncoder",
     "PrefixTuningConfig",
     "PromptEmbedding",
