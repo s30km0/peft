@@ -23,6 +23,7 @@ from typing import Any, Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from transformers.pytorch_utils import Conv1D
 
 from peft.tuners._buffer_dict import BufferDict
 from peft.tuners.tuners_utils import BaseTunerLayer, check_adapters_to_merge
@@ -190,16 +191,16 @@ class QuantaLayer(BaseTunerLayer):
         eq_eval = _gen_einsum_eq_eval(d)
         optimize = _get_optimize_strategy(d)
 
-        # Shapes for contraction optimization
-        train_shapes = [(100,) + tuple(pdf)]
-        for dim1, dim2 in itertools.combinations(range(-1, -d - 1, -1), 2):
-            train_shapes.append((pdf[dim2], pdf[dim1], pdf[dim2], pdf[dim1]))
+        # Training equation uses '...' for arbitrary batch dims (e.g. batch × seq_len).
+        # opt_einsum.contract_expression requires concrete shapes at compile time, so a
+        # pre-compiled path would only be valid for the exact batch shape used during
+        # compilation.  Use plain torch.einsum instead to support dynamic batch shapes.
+        self._einsum_expr_train[adapter_name] = _TorchEinsumCallable(eq_train)
 
+        # Eval equation has no batch dimension — safe to pre-compile.
         eval_shapes = []
         for dim1, dim2 in itertools.combinations(range(-1, -d - 1, -1), 2):
             eval_shapes.append((pdf[dim2], pdf[dim1], pdf[dim2], pdf[dim1]))
-
-        self._einsum_expr_train[adapter_name] = _compile_einsum(eq_train, train_shapes, optimize)
         self._einsum_expr_eval[adapter_name] = _compile_einsum(eq_eval, eval_shapes, optimize)
 
     def __getstate__(self):
